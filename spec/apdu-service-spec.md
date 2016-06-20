@@ -39,12 +39,15 @@ Each role must support the following:
 | APDU Commands                       | Write    | 512 bytes  | `9e73ecae-0701-403a-aefc-a1c5f6d16173` |
 | Conversation Finished               | Write    | < 20 bytes | `a7fb8746-c1dc-47a3-b201-c17411617936` |
 | APDU ResponsesReady                 | Notify   | NA         | `fbbe5e92-afdc-40ea-bada-aaf6f7bb8b01` |
-| APDU Responses                      | Read     | 512 bytes  | `954727a7-5907-4377-8b5a-7d70951340a9 |
+| APDU Responses                      | Read     | 512 bytes  | `954727a7-5907-4377-8b5a-7d70951340a9` |
 
 #### Characteristic: APDU Commands
-Used by the Client to transmit a sequence of Command APDUs. The sequence is a serialized stream of APDUs following the structure below, encoded using [MessagePack](http://msgpack.org/):
+Used by the Client to transmit a sequence of Command APDUs. The sequence is a serialized stream of APDUs following the structure below:
 
 ![APDU Command sequence](fig/command-apdu-sequence.png)
+
+Both the number of APDUs and the length of each APDU are encoded using two bytes, so that the resulting value is:
+```value = [byte 0] + [byte 1]*256```
 
 #### Characteristic: Conversation Finished
 Used by the Client to notify the Server that the APDU exchange has finished so the Server can power the device down.
@@ -59,7 +62,7 @@ Response APDUs will be encoded in the same structure as command APDUs in the fig
 
 
 ## Packet and payload structure
-APDU Commands and APDU Responses data may not fit into a single BLE packet, so they will have to be fragmented by the issuer and then reconstructed by the receiver. The APDU-Service will use the following packet structure:
+APDU Commands and APDU Responses data may not fit into a single BLE packet, so they will have to be fragmented by the issuer and then reconstructed by the receiver. The APDU-Service will use the following packet structure (encoded using [MessagePack](http://msgpack.org/):
 
 ![BLE packet structure](fig/ble-packet-structure.png)
 
