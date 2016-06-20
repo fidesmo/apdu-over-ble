@@ -63,15 +63,19 @@ Response APDUs will be encoded in the same structure as command APDUs in the fig
 
 
 ## Packet and payload structure
-APDU Commands and APDU Responses data may not fit into a single BLE packet, so they will have to be fragmented by the issuer and then reconstructed by the receiver. The APDU-Service will use the following packet structure (encoded using [MessagePack](http://msgpack.org/):
+APDU Commands and APDU Responses data may not fit into a single BLE packet, so they will have to be fragmented by the issuer and then reconstructed by the receiver. The APDU-Service will use the following packet structure:
 
 ![BLE packet structure](fig/ble-packet-structure.png)
 
 which contains the following fields:
 - `len`: total length of the packet
-- `totn_pkt`: total number of packets (fragments) for this sequence
+- `totn_pkt`: total number of packets (fragments) for this APDU sequence
 - `pkt_nbr`: sequence number of the packet
 - `data`: payload. Fragment of the APDU Commands/Responses sequence
+
+The three unsigned integer fields `len`, `totn_pkt` and `pkt_nbr` are encoded in two bytes, using the same scheme as the fields in the APDU sequence above:
+
+```value = [byte 0] + [byte 1]*256```
 
 ## Sequence diagram
 Example of an exchange of Command and Response APDUs:
