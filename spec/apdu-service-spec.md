@@ -47,6 +47,7 @@ Used by the Client to transmit a sequence of Command APDUs. The sequence is a se
 ![APDU Command sequence](fig/command-apdu-sequence.png)
 
 Both the number of APDUs and the length of each APDU are encoded using two bytes, so that the resulting value is:
+
 ```value = [byte 0] + [byte 1]*256```
 
 #### Characteristic: Conversation Finished
