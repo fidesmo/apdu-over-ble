@@ -38,9 +38,9 @@ Each role must support the following:
 |-------------------------------------|---------------- |------------|----------------------------------------|
 | APDU Commands                       | Write with ACK  | 512 bytes  | `9e73ecae-0701-403a-aefc-a1c5f6d16173` |
 | Conversation Finished               | Write with ACK  | < 20 bytes | `a7fb8746-c1dc-47a3-b201-c17411617936` |
-| APDU ResponsesReady                 | Notify with ACK | NA         | `fbbe5e92-afdc-40ea-bada-aaf6f7bb8b01` |
-| APDU Responses                      | Read with ACK   | 512 bytes  | `954727a7-5907-4377-8b5a-7d70951340a9` |
-| Max Memory for APDU processing      | Read with ACK   | <20 bytes  | `c2a9e13b-35fa-4c9b-9f59-1829d573689e` |
+| APDU Responses Ready                | Notify with ACK | NA         | `fbbe5e92-afdc-40ea-bada-aaf6f7bb8b01` |
+| APDU Responses                      | Read            | 512 bytes  | `954727a7-5907-4377-8b5a-7d70951340a9` |
+| Max Memory for APDU processing      | Read            | <20 bytes  | `c2a9e13b-35fa-4c9b-9f59-1829d573689e` |
 
 #### Characteristic: APDU Commands
 Used by the Client to transmit a sequence of Command APDUs. The sequence is a serialized stream of APDUs following the structure below:
@@ -82,9 +82,18 @@ The data follows a big-endian byte order (byte 0 sent first), and litle endian b
 
 *Length* does not need to be indicated explicitly: packet length is indicated by the lower layers of the BLE protocol. Length will always be the maximum size allowed by the characteristic (MTU-1), except for the last packet. In case the last packet fits exactly in MTU-1, an empty packet must be sent. Since the end of the APDU sequence is easily detected, it is not necessary to indicate the total number of fragments for a given APDU sequence.
 
-## Retry policy
+## Packet ordering and retry policy
 
-The Client/Server sends the different fragments in order, waiting for the ACK from the receiver (sent by lower layers of the BLE stack). If the ACK for a packet is not received, that packet will be resent. The `pkt_nbr` can be used on the other side to detect repeated packets (e.g. in case an ACK had been lost).
+### Commands
+
+When sending a sequence of Command APDUs, the Client sends the different fragments in order, waiting for the ACK from the Server (sent by lower layers of the BLE stack). If the ACK for a packet is not received, that packet will be resent. The `pkt_nbr` can be used on the other side to detect repeated packets (e.g. in case an ACK had been lost).
+
+### Responses
+
+When the Server has finished processing the Command APDUs, it issues an `APDU Responses Ready` notification. Then the Client will fetch the first fragment of the sequence of Response APDUs by reading the `APDU Responses` characteristic.
+The `APDU Responses` characteristic will also work as implicit ACK of the previous message. Therefore,
+if the Server does not receive an `APDU Responses` read, it will resend either the `APDU Responses Ready` notification or the last fragment of the Response APDUs sequence.
+
 
 ## Sequence diagram
 Example of an exchange of Command and Response APDUs:
