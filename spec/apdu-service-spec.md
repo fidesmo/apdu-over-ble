@@ -56,11 +56,10 @@ Used by the Client to notify the Server that the APDU exchange has finished so t
 The payload transmitted is irrelevant.
 
 ### Characteristic: APDU Responses Ready
-Notification issued by the Server to signal that all the Command APDUs in the sequence have been processed, so the Response APDUs can be retrieved.
+Notification issued by the Server to signal that all the Command APDUs in the sequence have been processed, so the Response APDUs can be retrieved. The payload transmitted is irrelevant.
 
 ### Characteristic: APDU Responses
-Used by the Client to retrieve the sequence of Response APDUs corresponding to the processing of a previous sequence of Command APDUs.
-Response APDUs will be encoded in the same structure as command APDUs in the figure above.
+Used by the Client to retrieve the sequence of Response APDUs corresponding to the processing of a previous sequence of Command APDUs. The Client will read this characteristic only after receiving *APDU Responses Ready* notification. Response APDUs will be encoded in the same structure as command APDUs in the figure above.
 
 ### Characteristic: Max Memory for APDU processing
 Memory, in kilobytes, that the Server can use to store APDU Commands. This limits the number of APDU Commands that can be sent by writing to the *APDU Commands* characteristic.
@@ -72,10 +71,12 @@ APDU Commands and APDU Responses data may not fit into a single BLE packet, so t
 ![BLE packet structure](fig/ble-packet-structure.png)
 
 which contains the following fields:
+- `len`: total sequence length
+- `totn_pkt`: total packets number
 - `pkt_nbr`: sequence number of the fragment, encoded in one byte
 - `data`: payload. Fragment of the APDU Commands/Responses sequence
 
-The data follows a big-endian byte order (byte 0 sent first), and litle endian bit order in each byte:
+The data follows a big-endian byte order (byte 0 sent first), and little endian bit order in each byte:
 
 ![Endianess](fig/endianess.png)
 
@@ -99,4 +100,3 @@ if the Server does not receive an `APDU Responses` read, it will resend either t
 Example of an exchange of Command and Response APDUs:
 
 ![Example sequence](fig/example-sequence.png)
-
