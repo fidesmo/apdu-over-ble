@@ -64,6 +64,7 @@ Used by the Client to retrieve the sequence of Response APDUs corresponding to t
 ### Characteristic: Max Memory for APDU processing
 Memory, in kilobytes, that the Server can use to store APDU Commands. This limits the number of APDU Commands that can be sent by writing to the *APDU Commands* characteristic.
 This characteristic is optional. If missing, the Server indicates that it does not have any memory limitations, so the Client does not need to limit the number of Command APDUs sent in a sequence.
+Payload: memory (in bytes), coded as a 32-bit unsigned integer.
 
 ## Packet and payload structure
 APDU Commands and APDU Responses data may not fit into a single BLE packet, so they will have to be fragmented by the issuer and then reconstructed by the receiver. The APDU-Service will use the following packet structure:
@@ -71,9 +72,8 @@ APDU Commands and APDU Responses data may not fit into a single BLE packet, so t
 ![BLE packet structure](fig/ble-packet-structure.png)
 
 which contains the following fields:
-- `len`: total sequence length
-- `totn_pkt`: total packets number
-- `pkt_nbr`: sequence number of the fragment, encoded in one byte
+- `totn_pkt`: total number of packets in the APDU Commands/Responses sequence
+- `pkt_nbr`: position of the packet (in the sequence)
 - `data`: payload. Fragment of the APDU Commands/Responses sequence
 
 The data follows a big-endian byte order (byte 0 sent first), and little endian bit order in each byte:
@@ -81,22 +81,23 @@ The data follows a big-endian byte order (byte 0 sent first), and little endian 
 ![Endianess](fig/endianess.png)
 
 
-*Length* does not need to be indicated explicitly: packet length is indicated by the lower layers of the BLE protocol. Length will always be the maximum size allowed by the characteristic (MTU-1), except for the last packet. In case the last packet fits exactly in MTU-1, an empty packet must be sent. Since the end of the APDU sequence is easily detected, it is not necessary to indicate the total number of fragments for a given APDU sequence.
+The packet's length will always be the maximum size allowed by the characteristic (MTU-1), except for the last packet, that might be shorter. The length is implicitly given by the bearer protocol.
 
 ## Packet ordering and retry policy
 
+BLE guarantees ordered packet delivery, so it is not necessary to specify when to retry transmission, detect duplicates, etc.
+
+
+## Sequence diagram
+
 ### Commands
 
-When sending a sequence of Command APDUs, the Client sends the different fragments in order, waiting for the ACK from the Server (sent by lower layers of the BLE stack). If the ACK for a packet is not received, that packet will be resent. The `pkt_nbr` can be used on the other side to detect repeated packets (e.g. in case an ACK had been lost).
+When sending a sequence of Command APDUs, the Client sends the different fragments in order, waiting for the ACK from the Server (sent by lower layers of the BLE stack). 
 
 ### Responses
 
 When the Server has finished processing the Command APDUs, it issues an `APDU Responses Ready` notification. Then the Client will fetch the first fragment of the sequence of Response APDUs by reading the `APDU Responses` characteristic.
-The `APDU Responses` characteristic will also work as implicit ACK of the previous message. Therefore,
-if the Server does not receive an `APDU Responses` read, it will resend either the `APDU Responses Ready` notification or the last fragment of the Response APDUs sequence.
 
-
-## Sequence diagram
 Example of an exchange of Command and Response APDUs:
 
 ![Example sequence](fig/example-sequence.png)
