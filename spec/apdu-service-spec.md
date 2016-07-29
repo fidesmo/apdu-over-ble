@@ -34,12 +34,13 @@ Each role must support the following:
 
 ### Service Characteristics
 
-| Characteristic name and description | Property | Length     | UUID                                   |
-|-------------------------------------|----------|------------|----------------------------------------|
-| APDU Commands                       | Write    | 512 bytes  | `9e73ecae-0701-403a-aefc-a1c5f6d16173` |
-| Conversation Finished               | Write    | < 20 bytes | `a7fb8746-c1dc-47a3-b201-c17411617936` |
-| APDU ResponsesReady                 | Notify   | NA         | `fbbe5e92-afdc-40ea-bada-aaf6f7bb8b01` |
-| APDU Responses                      | Read     | 512 bytes  | `954727a7-5907-4377-8b5a-7d70951340a9` |
+| Characteristic name                 | Property        | Length     | UUID                                   |
+|-------------------------------------|---------------- |------------|----------------------------------------|
+| APDU Commands                       | Write with ACK  | 512 bytes  | `9e73ecae-0701-403a-aefc-a1c5f6d16173` |
+| Conversation Finished               | Write with ACK  | < 20 bytes | `a7fb8746-c1dc-47a3-b201-c17411617936` |
+| APDU Responses Ready                | Notify with ACK | NA         | `fbbe5e92-afdc-40ea-bada-aaf6f7bb8b01` |
+| APDU Responses                      | Read            | 512 bytes  | `954727a7-5907-4377-8b5a-7d70951340a9` |
+| Max Memory for APDU processing      | Read            | <20 bytes  | `c2a9e13b-35fa-4c9b-9f59-1829d573689e` |
 
 #### Characteristic: APDU Commands
 Used by the Client to transmit a sequence of Command APDUs. The sequence is a serialized stream of APDUs following the structure below:
@@ -55,12 +56,15 @@ Used by the Client to notify the Server that the APDU exchange has finished so t
 The payload transmitted is irrelevant.
 
 ### Characteristic: APDU Responses Ready
-Notification issued by the Server to signal that all the Command APDUs in the sequence have been processed, so the Response APDUs can be retrieved.
+Notification issued by the Server to signal that all the Command APDUs in the sequence have been processed, so the Response APDUs can be retrieved. The payload transmitted is irrelevant.
 
 ### Characteristic: APDU Responses
-Used by the Client to retrieve the sequence of Response APDUs corresponding to the processing of a previous sequence of Command APDUs.
-Response APDUs will be encoded in the same structure as command APDUs in the figure above.
+Used by the Client to retrieve the sequence of Response APDUs corresponding to the processing of a previous sequence of Command APDUs. The Client will read this characteristic only after receiving *APDU Responses Ready* notification. Response APDUs will be encoded in the same structure as command APDUs in the figure above.
 
+### Characteristic: Max Memory for APDU processing
+Memory, in kilobytes, that the Server can use to store APDU Commands. This limits the number of APDU Commands that can be sent by writing to the *APDU Commands* characteristic.
+This characteristic is optional. If missing, the Server indicates that it does not have any memory limitations, so the Client does not need to limit the number of Command APDUs sent in a sequence.
+Payload: memory (in bytes), coded as a 32-bit unsigned integer.
 
 ## Packet and payload structure
 APDU Commands and APDU Responses data may not fit into a single BLE packet, so they will have to be fragmented by the issuer and then reconstructed by the receiver. The APDU-Service will use the following packet structure:
@@ -68,17 +72,32 @@ APDU Commands and APDU Responses data may not fit into a single BLE packet, so t
 ![BLE packet structure](fig/ble-packet-structure.png)
 
 which contains the following fields:
-- `len`: total length of the packet
-- `totn_pkt`: total number of packets (fragments) for this APDU sequence
-- `pkt_nbr`: sequence number of the packet
+- `totn_pkt`: total number of packets in the APDU Commands/Responses sequence
+- `pkt_nbr`: position of the packet (in the sequence)
 - `data`: payload. Fragment of the APDU Commands/Responses sequence
 
-The three unsigned integer fields `len`, `totn_pkt` and `pkt_nbr` are encoded in two bytes, using the same scheme as the fields in the APDU sequence above:
+The data follows a big-endian byte order (byte 0 sent first), and little endian bit order in each byte:
 
-```value = [byte 0] + [byte 1]*256```
+![Endianess](fig/endianess.png)
+
+
+The packet's length will always be the maximum size allowed by the characteristic (MTU-1), except for the last packet, that might be shorter. The length is implicitly given by the bearer protocol.
+
+## Packet ordering and retry policy
+
+BLE guarantees ordered packet delivery, so it is not necessary to specify when to retry transmission, detect duplicates, etc.
+
 
 ## Sequence diagram
+
+### Commands
+
+When sending a sequence of Command APDUs, the Client sends the different fragments in order, waiting for the ACK from the Server (sent by lower layers of the BLE stack). 
+
+### Responses
+
+When the Server has finished processing the Command APDUs, it issues an `APDU Responses Ready` notification. Then the Client will fetch the first fragment of the sequence of Response APDUs by reading the `APDU Responses` characteristic.
+
 Example of an exchange of Command and Response APDUs:
 
 ![Example sequence](fig/example-sequence.png)
-
