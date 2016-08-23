@@ -36,11 +36,11 @@ Each role must support the following:
 
 | Characteristic name                 | Property        | Length     | UUID                                   |
 |-------------------------------------|---------------- |------------|----------------------------------------|
-| APDU Commands                       | Write with ACK  | 512 bytes  | `9e73ecae-0701-403a-aefc-a1c5f6d16173` |
-| Conversation Finished               | Write with ACK  | < 20 bytes | `a7fb8746-c1dc-47a3-b201-c17411617936` |
-| APDU Responses Ready                | Notify with ACK | NA         | `fbbe5e92-afdc-40ea-bada-aaf6f7bb8b01` |
-| APDU Responses                      | Read            | 512 bytes  | `954727a7-5907-4377-8b5a-7d70951340a9` |
-| Max Memory for APDU processing      | Read            | <20 bytes  | `c2a9e13b-35fa-4c9b-9f59-1829d573689e` |
+| APDU Commands                       | Write with ACK  | 512 bytes  | `8e79ecae-bb90-4967-a4a5-3f21aa9e05eb` |
+| Conversation Finished               | Write with ACK  | < 20 bytes | `8e798746-bb90-4967-a4a5-3f21aa9e05eb` |
+| APDU Responses Ready                | Notify with ACK | NA         | `8e795e92-bb90-4967-a4a5-3f21aa9e05eb` |
+| APDU Responses                      | Read            | 512 bytes  | `8e7927a7-bb90-4967-a4a5-3f21aa9e05eb` |
+| Max Memory for APDU processing      | Read            | <20 bytes  | `8e79e13b-bb90-4967-a4a5-3f21aa9e05eb` |
 
 #### Characteristic: APDU Commands
 Used by the Client to transmit a sequence of Command APDUs. The sequence is a serialized stream of APDUs following the structure below:
