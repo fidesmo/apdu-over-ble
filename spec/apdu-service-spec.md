@@ -43,7 +43,7 @@ Each role must support the following:
 | Max Memory for APDU processing      | Read            | <20 bytes  | `8e79e13b-bb90-4967-a4a5-3f21aa9e05eb` |
 
 #### Characteristic: APDU Commands
-Used by the Client to transmit a sequence of Command APDUs. The sequence is a serialized stream of APDUs following the structure [below](#packet):
+Used by the Client to transmit a sequence of Command APDUs. The sequence is a serialized stream of APDUs following the structure below:
 
 ![APDU Command sequence](fig/command-apdu-sequence.png)
 
@@ -51,7 +51,7 @@ Both the number of APDUs and the length of each APDU are encoded using two bytes
 
 ```value = [byte 0] + [byte 1]*256```
 
-The sequence of APDUs is then divided into packets that fit into the maximum length for this characteristic, following the structure described below.
+The sequence of APDUs is then divided into packets that fit into the maximum length for this characteristic, following the structure [below](#packet).
 
 #### Characteristic: Conversation Finished
 Used by the Client to notify the Server that the APDU exchange has finished so the Server can power the device down.
@@ -69,7 +69,7 @@ This characteristic is optional. If missing, the Server indicates that it does n
 Payload: memory (in bytes), coded as a 32-bit unsigned integer.
 
 ## <a name="packet"></a> Packet and payload structure
-APDU Commands and APDU Responses data may not fit into a single BLE packet, so they will have to be fragmented by the issuer and then reconstructed by the receiver. The APDU-Service will use the following packet structure:
+Sequences of APDU Commands and Responses may not fit into a single BLE packet, so they will have to be fragmented by the issuer and then reconstructed by the receiver. The APDU-Service will use the following packet structure:
 
 ![BLE packet structure](fig/ble-packet-structure.png)
 
