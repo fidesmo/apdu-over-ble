@@ -10,7 +10,7 @@ This document specifies the BLE service that transmits Command-APDUs from a smar
 [bluetooth.org reference](https://developer.bluetooth.org/TechnologyOverview/Pages/LE-Security.aspx)
 The device shall enforce Security Mode 1, Level 2 (unauthenticated pairing with encryption) before any messages containing APDUs are exchanged.
 
-TO DO: check BLUETOOTH SPECIFICATION Version 4.2
+It is strongly encouraged to define an *application-level pairing* mechanism to make sure that only authorized applications may send APDU Commands to the device containing the Secure Element.
 
 ## Client and Server requirements
 Each role must support the following:
@@ -36,11 +36,11 @@ Each role must support the following:
 
 | Characteristic name                 | Property        | Length     | UUID                                   |
 |-------------------------------------|---------------- |------------|----------------------------------------|
-| APDU Commands                       | Write with ACK  | 512 bytes  | `9e73ecae-0701-403a-aefc-a1c5f6d16173` |
-| Conversation Finished               | Write with ACK  | < 20 bytes | `a7fb8746-c1dc-47a3-b201-c17411617936` |
-| APDU Responses Ready                | Notify with ACK | NA         | `fbbe5e92-afdc-40ea-bada-aaf6f7bb8b01` |
-| APDU Responses                      | Read            | 512 bytes  | `954727a7-5907-4377-8b5a-7d70951340a9` |
-| Max Memory for APDU processing      | Read            | <20 bytes  | `c2a9e13b-35fa-4c9b-9f59-1829d573689e` |
+| APDU Commands                       | Write with ACK  | 512 bytes  | `8e79ecae-bb90-4967-a4a5-3f21aa9e05eb` |
+| Conversation Finished               | Write with ACK  | < 20 bytes | `8e798746-bb90-4967-a4a5-3f21aa9e05eb` |
+| APDU Responses Ready                | Notify with ACK | NA         | `8e795e92-bb90-4967-a4a5-3f21aa9e05eb` |
+| APDU Responses                      | Read            | 512 bytes  | `8e7927a7-bb90-4967-a4a5-3f21aa9e05eb` |
+| Max Memory for APDU processing      | Read            | <20 bytes  | `8e79e13b-bb90-4967-a4a5-3f21aa9e05eb` |
 
 #### Characteristic: APDU Commands
 Used by the Client to transmit a sequence of Command APDUs. The sequence is a serialized stream of APDUs following the structure below:
@@ -51,23 +51,25 @@ Both the number of APDUs and the length of each APDU are encoded using two bytes
 
 ```value = [byte 0] + [byte 1]*256```
 
+The sequence of APDUs is then divided into packets that fit into the maximum length for this characteristic, following the structure [below](#packet).
+
 #### Characteristic: Conversation Finished
 Used by the Client to notify the Server that the APDU exchange has finished so the Server can power the device down.
 The payload transmitted is irrelevant.
 
-### Characteristic: APDU Responses Ready
+#### Characteristic: APDU Responses Ready
 Notification issued by the Server to signal that all the Command APDUs in the sequence have been processed, so the Response APDUs can be retrieved. The payload transmitted is irrelevant.
 
-### Characteristic: APDU Responses
+#### Characteristic: APDU Responses
 Used by the Client to retrieve the sequence of Response APDUs corresponding to the processing of a previous sequence of Command APDUs. The Client will read this characteristic only after receiving *APDU Responses Ready* notification. Response APDUs will be encoded in the same structure as command APDUs in the figure above.
 
-### Characteristic: Max Memory for APDU processing
+#### Characteristic: Max Memory for APDU processing
 Memory, in kilobytes, that the Server can use to store APDU Commands. This limits the number of APDU Commands that can be sent by writing to the *APDU Commands* characteristic.
 This characteristic is optional. If missing, the Server indicates that it does not have any memory limitations, so the Client does not need to limit the number of Command APDUs sent in a sequence.
 Payload: memory (in bytes), coded as a 32-bit unsigned integer.
 
-## Packet and payload structure
-APDU Commands and APDU Responses data may not fit into a single BLE packet, so they will have to be fragmented by the issuer and then reconstructed by the receiver. The APDU-Service will use the following packet structure:
+## <a name="packet"></a> Packet and payload structure
+Sequences of APDU Commands and Responses may not fit into a single BLE packet, so they will have to be fragmented by the issuer and then reconstructed by the receiver. The APDU-Service will use the following packet structure:
 
 ![BLE packet structure](fig/ble-packet-structure.png)
 
@@ -81,12 +83,19 @@ The data follows a big-endian byte order (byte 0 sent first), and little endian 
 ![Endianess](fig/endianess.png)
 
 
-The packet's length will always be the maximum size allowed by the characteristic (MTU-1), except for the last packet, that might be shorter. The length is implicitly given by the bearer protocol.
+The packet's length will always be the maximum size allowed by the `APDU Commands` characteristic, except for the last packet, that might be shorter.
 
 ## Packet ordering and retry policy
 
 BLE guarantees ordered packet delivery, so it is not necessary to specify when to retry transmission, detect duplicates, etc.
 
+## Maximum length of sequences, commands and packets (informative)
+This section explains how the different frames are split in lower-layer packets, and how the maximum lenght of each is specified.
+- APDU Sequence: frame that groups several APDU commands or responses. Its maximum length is defined by the characteristic `Max Memory for APDU processing`.
+- APDU Commands packet: section of the APDU Sequence that fits in a single BLE operation. Its maximum size is the length of the `APDU Commands` write characteristic.
+- BLE packet: data fragment actually transmitted by the lower layers of the BLE stack. Its maximum size is defined by the MTU size negotiated between the BLE client and server. Fragmentation, ordering and reconstruction are done transparently, so there is no need to specify them in this document. 
+
+![Sequences, commands, packets](fig/sequences-commands-packets.png)
 
 ## Sequence diagram
 
