@@ -40,7 +40,7 @@ Two possible DoS attacks using this feature:
 - An attacker connects to any nearby BLE device. After observing the characteristics, uses the APDU Commands characteristic to send authentication packets to the Secure Element. Since the hacker does not have SE keys, they will fail. After a few such attempts, the SE shuts down.
 - A malicious app communicates with a device via BLE. It sends authentication APDUs that will fail repeatedly (the malicious app does not have the keys), until the device's SE goes into an unusable state as self-protection.
 
-Countermeasures: *User Presence Verification* would limit the chances of both attacks happening. *Secured pairing* protects against the first attack but not against the second, because all applications installed on the client device (for example a smartphone) can access paired devices.
+Countermeasures: *User Presence Verification* would limit the chances of both attacks happening. *Secured pairing* protects against the first attack, but to protect against the second it will need to be enhanced with *Application-level pairing*, so that not all applications installed on the client device (for example a smartphone) can access paired devices.
 
 ## Countermeasures
 
@@ -49,4 +49,6 @@ The device's BLE capabilities are only active after user intervention (e.g by pr
 
 ### Secured pairing
 Include some parameter in the pairing procedure so that it can only be performed by the legitimate user: either displaying a code on the device that has to be input on the Bluetooth client, or distributing such code with the device's materials.
+
+Define an *application-level pairing* mechanism to ensure that only authorized applications may send APDU Commands to the Secure Element.
 

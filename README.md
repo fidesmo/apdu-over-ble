@@ -4,19 +4,9 @@ Specification of a Bluetooth Low Energy service and protocol to transmit [APDU](
 
 This repository contains discussion materials and the different versions of [the specification](https://github.com/fidesmo/apdu-over-ble/tree/master/spec).
 
-## Other resources
-To allow easy testing of this specification, Fidesmo has open sourced client and server prototypes implemented as Android apps:
+## Other resources: Android prototype
+To allow easy testing of this specification, Fidesmo has open sourced an Android app that can perform the server and client roles. The client sends APDUs over BLE to a server running on an NFC-enabled phone that then forwards the APDU commands to a contactless card and returns its response.
 
-### BLE Client
-The BLE Client prototype is available in this repository: [apdu-over-ble-android](https://github.com/fidesmo/apdu-over-ble-android)
-It needs to be run on an Android device with Bluetooth 4.0 or newer.
+The prototype is available in this repository: [apdu-over-ble-android](https://github.com/fidesmo/apdu-over-ble-android)
 
-### BLE Server
-The BLE Server prototype is available in this repository: [android-ble-server](https://github.com/fidesmo/android-ble-server)
-It needs to be run on an Android device with 
-- Bluetooth 4.0 or newer
-- NFC capabilities
-
-
-To fully test the BLE Client --> BLE Server --> Secure Element connection, it is necessary to have a contactless device, like for example a [Fidesmo Card](https://developer.fidesmo.com/fidesmocard).
 
