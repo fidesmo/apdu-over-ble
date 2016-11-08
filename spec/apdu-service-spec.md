@@ -1,10 +1,10 @@
 # APDU-Service specification
 
-This document specifies the BLE service that transmits Command-APDUs from a smartphone to a BLE device that also contains a Secure Element.
+This document specifies the BLE service that transmits Command-APDUs from a BLE client device to a BLE device that also contains a Secure Element.
 
 ## Roles
-- A smartphone app will implement the *GATT Client* role.
-- A BLE + SE device will implement the *GATT Server* role (also a BLE Peripheral)
+- The BLE client device (for example, a smartphone app) will implement the *GATT Client* role.
+- A BLE + SE device will implement the *GATT Server* role (also known as *BLE Peripheral*)
 
 ## Pairing and Security
 [bluetooth.org reference](https://developer.bluetooth.org/TechnologyOverview/Pages/LE-Security.aspx)
@@ -90,7 +90,7 @@ The packet's length will always be the maximum size allowed by the `APDU Command
 BLE guarantees ordered packet delivery, so it is not necessary to specify when to retry transmission, detect duplicates, etc.
 
 ## Maximum length of sequences, commands and packets (informative)
-This section explains how the different frames are split in lower-layer packets, and how the maximum lenght of each is specified.
+This section explains how the different frames are split in lower-layer packets, and how the maximum length of each is specified.
 - APDU Sequence: frame that groups several APDU commands or responses. Its maximum length is defined by the characteristic `Max Memory for APDU processing`.
 - APDU Commands packet: section of the APDU Sequence that fits in a single BLE operation. Its maximum size is the length of the `APDU Commands` write characteristic.
 - BLE packet: data fragment actually transmitted by the lower layers of the BLE stack. Its maximum size is defined by the MTU size negotiated between the BLE client and server. Fragmentation, ordering and reconstruction are done transparently, so there is no need to specify them in this document. 
