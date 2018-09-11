@@ -37,10 +37,10 @@ Each role must support the following:
 | Characteristic name                 | Property        | Length     | UUID                                   |
 |-------------------------------------|---------------- |------------|----------------------------------------|
 | APDU Commands                       | Write with ACK  | 512 bytes  | `8e79ecae-bb90-4967-a4a5-3f21aa9e05eb` |
-| Conversation Finished               | Write with ACK  | < 20 bytes | `8e798746-bb90-4967-a4a5-3f21aa9e05eb` |
+| Conversation Finished               | Write with ACK  | 4 bytes    | `8e798746-bb90-4967-a4a5-3f21aa9e05eb` |
 | APDU Responses Ready                | Notify with ACK | NA         | `8e795e92-bb90-4967-a4a5-3f21aa9e05eb` |
 | APDU Responses                      | Read            | 512 bytes  | `8e7927a7-bb90-4967-a4a5-3f21aa9e05eb` |
-| Max Memory for APDU processing      | Read            | <20 bytes  | `8e79e13b-bb90-4967-a4a5-3f21aa9e05eb` |
+| Max Memory for APDU processing      | Read            | 4 bytes    | `8e79e13b-bb90-4967-a4a5-3f21aa9e05eb` |
 
 #### Characteristic: APDU Commands
 Used by the Client to transmit a sequence of Command APDUs. The sequence is a serialized stream of APDUs following the structure below:
@@ -55,7 +55,7 @@ The sequence of APDUs is then divided into packets that fit into the maximum len
 
 #### Characteristic: Conversation Finished
 Used by the Client to notify the Server that the APDU exchange has finished so the Server can power the device down.
-The payload transmitted is irrelevant.
+The payload has to be `0` coded as 32-bit unsigned integer.
 
 #### Characteristic: APDU Responses Ready
 Notification issued by the Server to signal that all the Command APDUs in the sequence have been processed, so the Response APDUs can be retrieved. The payload transmitted is irrelevant.
@@ -64,7 +64,7 @@ Notification issued by the Server to signal that all the Command APDUs in the se
 Used by the Client to retrieve the sequence of Response APDUs corresponding to the processing of a previous sequence of Command APDUs. The Client will read this characteristic only after receiving *APDU Responses Ready* notification. Response APDUs will be encoded in the same structure as command APDUs in the figure above.
 
 #### Characteristic: Max Memory for APDU processing
-Memory, in kilobytes, that the Server can use to store APDU Commands. This limits the number of APDU Commands that can be sent by writing to the *APDU Commands* characteristic.
+Memory, in bytes, that the Server can use to store APDU Commands. This limits the number of APDU Commands that can be sent by writing to the *APDU Commands* characteristic.
 This characteristic is optional. If missing, the Server indicates that it does not have any memory limitations, so the Client does not need to limit the number of Command APDUs sent in a sequence.
 Payload: memory (in bytes), coded as a 32-bit unsigned integer.
 
