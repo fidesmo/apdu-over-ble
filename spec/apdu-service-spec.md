@@ -42,13 +42,12 @@ Each role must support the following:
 
 ### Service Characteristics
 
-| Characteristic name                 | Property        | Length     | UUID                                   |
-|-------------------------------------|---------------- |------------|----------------------------------------|
-| APDU Command                        | Write with ACK  | 512 bytes  | `8e79ecae-bb90-4967-a4a5-3f21aa9e05eb` |
-| APDU Response Ready                 | Notify          | NA         | `8e795e92-bb90-4967-a4a5-3f21aa9e05eb` |
-| APDU Response                       | Read            | 512 bytes  | `8e7927a7-bb90-4967-a4a5-3f21aa9e05eb` |
-| Close Communication                 | Write with ACK  | 4 bytes    | `8e798746-bb90-4967-a4a5-3f21aa9e05eb` |
-| Error                               | Notify          | 4 bytes    | `8e79e493-bb90-4967-a4a5-3f21aa9e05eb`
+| Characteristic name                 | Property        | Length       | UUID                                   |
+|-------------------------------------|---------------- |--------------|----------------------------------------|
+| APDU Command                        | Write with ACK  | 1..MTU bytes | `8e79ecae-bb90-4967-a4a5-3f21aa9e05eb` |
+| APDU Response Ready                 | Notify          | 4 bytes      | `8e795e92-bb90-4967-a4a5-3f21aa9e05eb` |
+| APDU Response                       | Read            | 1..MTU bytes | `8e7927a7-bb90-4967-a4a5-3f21aa9e05eb` |
+| Close Communication                 | Write with ACK  | 4 bytes      | `8e798746-bb90-4967-a4a5-3f21aa9e05eb` |
 
 #### Characteristic: APDU Command
 Used by the Client to transmit a Command APDU, fragmented into messages that fit the established BLE MTU.
@@ -56,7 +55,12 @@ Used by the Client to transmit a Command APDU, fragmented into messages that fit
 APDU is divided into packets following the structure [below](#packet).
 
 #### Characteristic: APDU Response Ready
-Notification issued by the Server to signal that the Response APDU can be retrieved. The payload transmitted is irrelevant.
+Notification issued by the Server to signal that the Response APDU can be retrieved or an error code.
+
+The payload has to be a 32-bit unsigned big endian integer, denoting:
+  - `0x000000000`: No error, APDU is ready for reading
+  - `0x000000001`: Generic SE error (no response from SE, transaction reset)
+  - `0x000000002`: APDU-over-BLE protocol error (packets lost, incorrect sequence, timeout)
 
 #### Characteristic: APDU Response
 Used by the Client to retrieve the Response APDU fragments corresponding to the processing of a previous Command APDU. The Client will read this characteristic only after receiving *APDU Response Ready* notification. Response APDU fragments will be encoded in the same structure as command APDUs in the figure below.
@@ -64,12 +68,6 @@ Used by the Client to retrieve the Response APDU fragments corresponding to the 
 #### Characteristic: Conversation Finished
 Used by the Client to notify the Server that the APDU exchange has finished so the Server can power the device down.
 The payload has to be `0` coded as 32-bit unsigned integer.
-
-#### Characteristic: Error
-Notification issued by the Server to signal an error condition. The payload has to be a 32-bit unsigned big endian integer, denoting:
-
-  - `0x000000001`: Generic SE error (no response from SE, transaction reset)
-  - `0x000000002`: APDU-over-BLE protocol error (packets lost, incorrect sequence)
 
 ## <a name="packet"></a> Packet and payload structure
 APDU Command or APDU Response may not fit into a single BLE packet (with a default [useful payload of only 23 bytes](https://punchthrough.com/pt-blog-post/maximizing-ble-throughput-part-2-use-larger-att-mtu/) when standard MTU is used), so they will have to be fragmented by the issuer and then reconstructed by the receiver.
